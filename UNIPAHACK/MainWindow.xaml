@@ -1,12 +1,11 @@
 ﻿<Window x:Class="UNIPAHACK.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="MainWindow" Height="350" Width="525">
+        Title="MainWindow" Height="450" Width="550">
     <Grid>
-        <TextBox x:Name="textbox1" HorizontalAlignment="Left" Height="254" Margin="10,48,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="399" FontSize="7"/>
-        <TextBox x:Name="id_textbox" HorizontalAlignment="Left" Height="23" Margin="10,10,0,0" TextWrapping="Wrap" Text="ID" VerticalAlignment="Top" Width="120"/>
-        <TextBox x:Name="password_textbox" HorizontalAlignment="Left" Height="23" Margin="135,10,0,0" TextWrapping="Wrap" Text="Password" VerticalAlignment="Top" Width="120"/>
+        <TextBox x:Name="textbox1" Margin="10,48,13,0" TextWrapping="Wrap" />
+        <TextBox x:Name="id_textbox" HorizontalAlignment="Left" Height="23" Margin="10,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+        <PasswordBox x:Name="password_box" HorizontalAlignment="Left" Margin="135,10,0,0" VerticalAlignment="Top" Height="23" Width="120"/>
         <Button Content="Start" HorizontalAlignment="Left" Margin="260,10,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_1"/>
-
     </Grid>
 </Window>
