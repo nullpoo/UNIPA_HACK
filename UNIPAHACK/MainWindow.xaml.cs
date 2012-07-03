@@ -142,22 +142,25 @@ namespace UNIPAHACK
                     .Select(el => (string)el.Value).Last();
                 page_count = int.Parse(q2);
 
-                //現在のページから1ページ目の情報を取得してから別のページにリクエストを投げる
-                var q3 = doc.Descendants(ns + "td")
-                    .Where(ul => ul.Attribute("class") != null && ul.Attribute("class").Value == "title")
-                    .Descendants(ns + "a").Descendants(ns + "span")
-                    .Select(el => (string)el.Value);
-                foreach (var item in q3)
+                //1ページ目から取得開始
+                List<string> tmp = new List<string>();
+                for (int i = 0; i < page_count; i++)
                 {
-                    textbox1.Text += item + "\r\n";
+                    tmp.Concat(await getKyukoHokoList(i));
                 }
-                for (int i = 1; i < page_count; i++)
+                XDocument document = new XDocument(new XDeclaration("1.0", "utf-8", "true"),
+                    new XComment("LINQ to XML Sample http://keicode.com/"),
+                    new XElement("Employees"));
+                foreach (var item in tmp)
                 {
-                    await getKyukoHokoList(i);
+                    var p = new XElement ("Jyugyo",
+                        new XElement("item", item));
+                    document.Add(p);
                 }
+                document.Save(@"C:\Users\kouki\Documents\GitHub\UNIPA_HACK\UNIPAHACK\bin\Debug\test.xml");
             }
         }
-        async Task getKyukoHokoList(int i)
+        async Task<IEnumerable<string>> getKyukoHokoList(int i)
         {
             //パラメータ作成
             Dictionary<string, string> dic = new Dictionary<string, string>();
@@ -184,11 +187,9 @@ namespace UNIPAHACK
                 var q2 = doc.Descendants(ns + "td")
                     .Where(ul => ul.Attribute("class") != null && ul.Attribute("class").Value == "title")
                     .Descendants(ns + "a").Descendants(ns + "span")
+                    .Where(el=>el.Attribute("id") != null)
                     .Select(el => (string)el.Value);
-                foreach (var item in q2)
-                {
-                    textbox1.Text += item + "\r\n";
-                }
+                return q2;
             }
         }
 
