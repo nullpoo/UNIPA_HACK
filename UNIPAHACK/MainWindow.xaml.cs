@@ -14,6 +14,7 @@ using System.Web;
 using Sgml;
 using System.Xml;
 using System.Xml.Linq;
+using System.Data;
 
 namespace UNIPAHACK
 {
@@ -143,24 +144,27 @@ namespace UNIPAHACK
                 page_count = int.Parse(q2);
 
                 //1ページ目から取得開始
-                List<string> tmp = new List<string>();
+                IEnumerable<string> tmp = new List<string>();
                 for (int i = 0; i < page_count; i++)
                 {
-                    tmp.Concat(await getKyukoHokoList(i));
+                    tmp = tmp.Concat(await getKyukoHokoList(i));
                 }
-                XDocument document = new XDocument(new XDeclaration("1.0", "utf-8", "true"),
-                    new XComment("LINQ to XML Sample http://keicode.com/"),
-                    new XElement("Employees"));
+                root xmlroot = new root();
+                xmlroot.docName = "test";
+
                 foreach (var item in tmp)
                 {
-                    var p = new XElement ("Jyugyo",
-                        new XElement("item", item));
-                    document.Add(p);
+                    item xmlitem = new item();
+                    xmlitem.name = item;
+                    xmlroot.elem.Add(xmlitem);
+                    textbox1.Text += item+"\r\n";
                 }
-                document.Save(@"C:\Users\kouki\Documents\GitHub\UNIPA_HACK\UNIPAHACK\bin\Debug\test.xml");
+                FileStream fs = new FileStream(@"test.xml",FileMode.Create);
+                System.Xml.Serialization.XmlSerializer serializer = new System.Xml.Serialization.XmlSerializer(typeof(root));
+                serializer.Serialize(fs,xmlroot);
             }
         }
-        async Task<IEnumerable<string>> getKyukoHokoList(int i)
+        async Task<List<string>> getKyukoHokoList(int i)
         {
             //パラメータ作成
             Dictionary<string, string> dic = new Dictionary<string, string>();
@@ -189,7 +193,7 @@ namespace UNIPAHACK
                     .Descendants(ns + "a").Descendants(ns + "span")
                     .Where(el=>el.Attribute("id") != null)
                     .Select(el => (string)el.Value);
-                return q2;
+                return q2.ToList();
             }
         }
 
