@@ -34,6 +34,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="MecabDotNet, Version=1.0.0.0, Culture=neutral, PublicKeyToken=05bfe94f2ee692d9, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Debug\MecabDotNet.dll</HintPath>
+    </Reference>
     <Reference Include="SgmlReaderDll">
       <HintPath>..\..\..\..\..\Desktop\PENDRIVE\HTMLReader\HTMLReader\SgmlReaderDll.dll</HintPath>
     </Reference>
