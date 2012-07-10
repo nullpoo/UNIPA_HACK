@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
@@ -21,6 +22,7 @@ namespace UNIPAHACK
         string pass = "";
         string session_id = "";
         int page_count;
+        int info_count;
         CookieContainer cc = new CookieContainer();
 
         public MainWindow()
@@ -50,8 +52,8 @@ namespace UNIPAHACK
                 var ns = doc.Root.Name.Namespace;
                 var q = doc.Descendants(ns + "input")
                     .Where(ul => ul.Attribute("id") != null && ul.Attribute("id").Value == "com.sun.faces.VIEW")
-                    .Select(el => el.Attribute("value").Value).ToList();
-                session_id = q[0];
+                    .Select(el => el.Attribute("value").Value).FirstOrDefault();
+                session_id = q;
             }
         }
         async Task<Stream> postRequest(Uri uri, Dictionary<string, string> dic)
@@ -127,8 +129,8 @@ namespace UNIPAHACK
 
                 var q = doc.Descendants(ns + "input")
                     .Where(ul => ul.Attribute("id") != null && ul.Attribute("id").Value == "com.sun.faces.VIEW")
-                    .Select(el => el.Attribute("value").Value).ToList();
-                session_id = q[0];
+                    .Select(el => el.Attribute("value").Value).FirstOrDefault();
+                session_id = q;
 
                 //ページ数取得
                 var q2 = doc.Descendants(ns + "span")
@@ -137,25 +139,25 @@ namespace UNIPAHACK
                     .Select(el => (string)el.Value).Last();
                 page_count = int.Parse(q2);
 
+                //項目数取得
+                var q3 = doc.Descendants(ns + "span")
+                    .Where(ul => ul.Attribute("id") != null && ul.Attribute("id").Value == "form1:Poa00201A:htmlParentTable:htmlDetailTbl2:htmlListCount")
+                    .Select(el => (string)el.Value).FirstOrDefault();
+                info_count = int.Parse(q3.Replace("件",""));
+
+                /*
                 //1ページ目から取得開始
                 IEnumerable<string> tmp = new List<string>();
                 for (int i = 0; i < page_count; i++)
                 {
                     tmp = tmp.Concat(await getKyukoHokoList(i));
                 }
-                root xmlroot = new root();
-                xmlroot.docName = "test";
 
                 foreach (var item in tmp)
                 {
-                    item xmlitem = new item();
-                    xmlitem.name = item;
-                    xmlroot.elem.Add(xmlitem);
-                    textbox1.Text += item+"\r\n";
+                    //textbox1.Text += item+"\r\n";
                 }
-                FileStream fs = new FileStream(@"test.xml",FileMode.Create);
-                System.Xml.Serialization.XmlSerializer serializer = new System.Xml.Serialization.XmlSerializer(typeof(root));
-                serializer.Serialize(fs,xmlroot);
+                */
             }
         }
         async Task<List<string>> getKyukoHokoList(int i)
@@ -179,8 +181,8 @@ namespace UNIPAHACK
 
                 var q = doc.Descendants(ns + "input")
                     .Where(ul => ul.Attribute("id") != null && ul.Attribute("id").Value == "com.sun.faces.VIEW")
-                    .Select(el => el.Attribute("value").Value).ToList();
-                session_id = q[0];
+                    .Select(el => el.Attribute("value").Value).FirstOrDefault();
+                session_id = q;
 
                 var q2 = doc.Descendants(ns + "td")
                     .Where(ul => ul.Attribute("class") != null && ul.Attribute("class").Value == "title")
@@ -188,6 +190,89 @@ namespace UNIPAHACK
                     .Where(el=>el.Attribute("id") != null)
                     .Select(el => (string)el.Value);
                 return q2.ToList();
+            }
+        }
+
+        async Task getInfoDetail()
+        {
+            root xmlroot = new root();
+            xmlroot.docName = "test";
+            for (int i = 0; i < info_count; i++)
+            {
+                var req = (HttpWebRequest)WebRequest.Create("https://portal.sa.dendai.ac.jp/up/faces/up/po/pPoa0202A.jsp?fieldId=form1:Poa00201A:htmlParentTable:0:htmlDetailTbl2:"+i+":linkEx2");
+                req.CookieContainer = cc;
+                req.KeepAlive = false;
+                req.Referer = "https://portal.sa.dendai.ac.jp/up/faces/up/po/Poa00601A.jsp";
+                var res = await req.GetResponseAsync();
+                var stream = res.GetResponseStream();
+                using (var reader = new StreamReader(stream))
+                using (var sgmlReader = new SgmlReader { InputStream = reader })
+                {
+                    sgmlReader.DocType = "HTML";
+                    sgmlReader.CaseFolding = CaseFolding.ToLower;
+                    var doc = XDocument.Load(sgmlReader);
+                    var ns = doc.Root.Name.Namespace;
+
+                    var q = doc.Descendants(ns + "span")
+                        .Where(ul => ul.Attribute("id") != null && ul.Attribute("id").Value == "form1:htmlTitle")
+                        .Select(el => el.Value).FirstOrDefault();
+                    var q2 = doc.Descendants(ns + "span")
+                        .Where(ul => ul.Attribute("id") != null && ul.Attribute("id").Value == "form1:htmlFrom")
+                        .Select(el => el.Value).FirstOrDefault();
+                    var q3 = doc.Descendants(ns + "span")
+                        .Where(ul => ul.Attribute("id") != null && ul.Attribute("id").Value == "form1:htmlMain")
+                        .Select(el => el.Nodes().Where(n=>n.NodeType == System.Xml.XmlNodeType.Text)
+                        .Select(n=>n.ToString()));
+                    var q4 = doc.Descendants(ns + "span")
+                        .Where(ul => ul.Attribute("id") != null && ul.Attribute("id").Value == "form1:htmlHenko")
+                        .Select(el => el.Value).FirstOrDefault();
+                    detail detail = new detail();
+                    detail.title = q;
+                    detail.sender = q2;
+                    detail.info = q4;
+                    foreach (var item in q3)
+                    {
+                        foreach (var item2 in item.Skip(1))
+                        {
+                            if (item2.IndexOf("科目") != -1)
+                            {
+                                var result = item2.Replace("科目名", "");
+                                result = result.Replace("科目", "");
+                                result = result.Replace("：", "");
+                                detail.cource = result;
+                            }
+                            else if ((item2.IndexOf("休講日") != -1) || (item2.IndexOf("補講日") != -1) || (item2.IndexOf("日付") != -1))
+                            {
+                                var result = item2.Replace("休講日", "");
+                                result = result.Replace("補講日", "");
+                                result = result.Replace("日付", "");
+                                result = result.Replace("：", "");
+                                if (result.Length > 5)//鳩山用処理
+                                {
+                                    detail.date = result;
+                                }
+                            }
+                        }
+                    }
+                    xmlroot.elem.Add(detail);
+                }
+                await RemoveSessionAjax();
+            }
+            FileStream fs = new FileStream(@"test.xml", FileMode.Create);
+            System.Xml.Serialization.XmlSerializer serializer = new System.Xml.Serialization.XmlSerializer(typeof(root));
+            serializer.Serialize(fs, xmlroot);
+        }
+
+        //これをしないと同じ内容を取得してしまう
+        async Task RemoveSessionAjax()
+        {
+            var req = (HttpWebRequest)WebRequest.Create("https://portal.sa.dendai.ac.jp/up/faces/ajax/up/co/RemoveSessionAjax?target=null&windowName=Poa00201A&pcClass=com.jast.gakuen.up.po.PPoa0202A");
+            req.CookieContainer = cc;
+            var res = await req.GetResponseAsync();
+            var stream = res.GetResponseStream();
+            using(var reader = new StreamReader(stream))
+            {
+                //何もしてない
             }
         }
 
@@ -199,6 +284,11 @@ namespace UNIPAHACK
             await mainpage();
             await getJyugyoInfo();
             await getKyukoHoko();
+        }
+
+        private async void Button_Click_2(object sender, RoutedEventArgs e)
+        {
+            await getInfoDetail();
         }
     }
 }
