@@ -21,9 +21,12 @@ namespace UNIPAHACK
         public string title;
         public string sender;
         public string date;
+        public string canceled_date;
+        public string revenge_date;
         public string cource;
+        public string teacher;
+        public string time;
         public string note;
-        public List<string> body = new List<string>();
         public string info;
     }
 }

@@ -215,17 +215,17 @@ namespace UNIPAHACK
 
                     var q = doc.Descendants(ns + "span")
                         .Where(ul => ul.Attribute("id") != null && ul.Attribute("id").Value == "form1:htmlTitle")
-                        .Select(el => el.Value).FirstOrDefault();
+                        .Select(el => el.Value.ToHankaku()).FirstOrDefault();
                     var q2 = doc.Descendants(ns + "span")
                         .Where(ul => ul.Attribute("id") != null && ul.Attribute("id").Value == "form1:htmlFrom")
-                        .Select(el => el.Value).FirstOrDefault();
+                        .Select(el => el.Value.ToHankaku()).FirstOrDefault();
                     var q3 = doc.Descendants(ns + "span")
                         .Where(ul => ul.Attribute("id") != null && ul.Attribute("id").Value == "form1:htmlMain")
                         .Select(el => el.Nodes().Where(n=>n.NodeType == System.Xml.XmlNodeType.Text)
-                        .Select(n=>n.ToString()));
+                        .Select(n=>n.ToString().ToHankaku()));
                     var q4 = doc.Descendants(ns + "span")
                         .Where(ul => ul.Attribute("id") != null && ul.Attribute("id").Value == "form1:htmlHenko")
-                        .Select(el => el.Value).FirstOrDefault();
+                        .Select(el => el.Value.ToHankaku()).FirstOrDefault();
                     detail detail = new detail();
                     detail.title = q;
                     detail.sender = q2;
@@ -234,23 +234,48 @@ namespace UNIPAHACK
                     {
                         foreach (var item2 in item.Skip(1))
                         {
+                            textbox1.Text += item2+"\r\n";
                             if (item2.IndexOf("科目") != -1)
                             {
                                 var result = item2.Replace("科目名", "");
                                 result = result.Replace("科目", "");
-                                result = result.Replace("：", "");
+                                result = result.Replace(":", "");
                                 detail.cource = result;
                             }
-                            else if ((item2.IndexOf("休講日") != -1) || (item2.IndexOf("補講日") != -1) || (item2.IndexOf("日付") != -1))
+                            else if (item2.IndexOf("休講日") != -1)
                             {
-                                var result = item2.Replace("休講日", "");
-                                result = result.Replace("補講日", "");
-                                result = result.Replace("日付", "");
-                                result = result.Replace("：", "");
-                                if (result.Length > 5)//鳩山用処理
-                                {
-                                    detail.date = result;
-                                }
+                                var str = item2.Replace("　", "");
+                                Regex regex = new Regex("^休講日:?(?<target>.*)");
+                                Match matched = regex.Match(str);
+                                detail.canceled_date = matched.Groups["target"].Value;
+                            }
+                            else if (item2.IndexOf("補講日") != -1)
+                            {
+                                var str = item2.Replace("　", "");
+                                Regex regex = new Regex("^補講日:?(?<target>.*)");
+                                Match matched = regex.Match(str);
+                                detail.revenge_date = matched.Groups["target"].Value;
+                            }
+                            else if (item2.IndexOf("日付") != -1)
+                            {
+                                var str = item2.Replace("　", "");
+                                Regex regex = new Regex("^日程:?(?<target>.*)");
+                                Match matched = regex.Match(str);
+                                detail.date = matched.Groups["target"].Value;
+                            }
+                            else if (item2.IndexOf("教員") != -1)
+                            {
+                                var result = item2.Replace("教員名", "");
+                                result = result.Replace("教員", "");
+                                result = result.Replace(":", "");
+                                detail.teacher = result;
+                            }
+                            else if (item2.IndexOf("時限") != -1)
+                            {
+                                var str = item2.Replace("　", "");
+                                Regex regex = new Regex("^時限:?(?<target>.*)");
+                                Match matched = regex.Match(str);
+                                detail.time = matched.Groups["target"].Value;
                             }
                         }
                     }
