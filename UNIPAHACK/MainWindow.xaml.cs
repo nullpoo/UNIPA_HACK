@@ -240,7 +240,7 @@ namespace UNIPAHACK
                                 var result = item2.Replace("科目名", "");
                                 result = result.Replace("科目", "");
                                 result = result.Replace(":", "");
-                                detail.cource = result;
+                                detail.course = result;
                             }
                             else if (item2.IndexOf("休講日") != -1)
                             {
@@ -259,7 +259,7 @@ namespace UNIPAHACK
                             else if (item2.IndexOf("日付") != -1)
                             {
                                 var str = item2.Replace("　", "");
-                                Regex regex = new Regex("^日程:?(?<target>.*)");
+                                Regex regex = new Regex("^日付:?(?<target>.*)");
                                 Match matched = regex.Match(str);
                                 detail.date = matched.Groups["target"].Value;
                             }

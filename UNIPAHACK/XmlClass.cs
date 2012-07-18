@@ -23,7 +23,7 @@ namespace UNIPAHACK
         public string date;
         public string canceled_date;
         public string revenge_date;
-        public string cource;
+        public string course;
         public string teacher;
         public string time;
         public string note;
